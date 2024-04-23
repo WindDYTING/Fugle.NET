@@ -41,4 +41,4 @@ internal class Program
     }
 }
 ```
-> 注意：範例底下也必須要有 config.simulation.ini 和 *.p12 的檔案
+> 注意：範例目錄底下也必須要有 config.simulation.ini 和 *.p12 的檔案
