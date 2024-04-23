@@ -14,3 +14,31 @@ pip install fugle_trade
 set PYTHON_HOME = "安裝 python 的目錄 <ex>: C:\Users\user1\AppData\Local\Programs\Python\Python39"
 ```
 * 完成申請金鑰相關步驟，可以參考 https://developer.fugle.tw/docs/trading/prerequisites 
+
+## Getting Started
+```c#
+internal class Program
+{
+    static void Main(string[] args)
+    {
+        var config = new FileIniDataParser();
+        var data = config.ReadFile("config.simulation.ini");
+
+        var sdk = new FugleSDK(data);
+        sdk.Login();
+        var info = sdk.CertInfo();
+        var ret = sdk.PlaceOrder(new OrderObject
+        {
+            ApCode = ApCode.AfterMarket,
+            BuyOrSell = ActionSide.Buy,
+            PType = PriceFlag.Limit,
+            Price = null,
+            StockNo = "2330",
+            Quantity = 1
+        });
+
+        Console.WriteLine(ret);
+    }
+}
+```
+> 注意：範例底下也必須要有 config.simulation.ini 和 *.p12 的檔案
