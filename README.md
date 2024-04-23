@@ -17,6 +17,11 @@ set PYTHON_HOME = "安裝 python 的目錄 <ex>: C:\Users\user1\AppData\Local\Pr
 
 ## Getting Started
 ```c#
+using System;
+using FugleNET;
+using FugleNET.Models;
+using IniParser;
+
 internal class Program
 {
     static void Main(string[] args)
@@ -26,7 +31,6 @@ internal class Program
 
         var sdk = new FugleSDK(data);
         sdk.Login();
-        var info = sdk.CertInfo();
         var ret = sdk.PlaceOrder(new OrderObject
         {
             ApCode = ApCode.AfterMarket,
