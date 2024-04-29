@@ -28,7 +28,7 @@ namespace FugleNET.PythonModels
         public dynamic bs_flag { get; set; }
 
 
-        public PythonOrderObject ToPythonOrder(OrderObject order)
+        public PythonOrderObject ConvertFrom(OrderObject order)
         {
             buy_sell = order.BuyOrSell == ActionSide.Buy ? buy_sell.Buy : buy_sell.Sell;
             ap_code = order.ApCode switch
