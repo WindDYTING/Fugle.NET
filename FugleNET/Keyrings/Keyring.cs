@@ -1,4 +1,6 @@
-﻿using System.Security.AccessControl;
+﻿using System;
+using System.IO;
+using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using IniParser;
@@ -18,16 +20,16 @@ namespace FugleNET.Keyrings
 
         public string FileVersion { get; set; }
 
-        public string Scheme { get; set; }
+        public string Scheme { get; set; } = "[PBKDF2] AES256.CFB";
 
-        protected virtual byte[] Decrypt(byte[] passwordEncrypted, byte[]? assoc = null)
+        protected virtual string Decrypt(string passwordEncrypted, byte[]? assoc = null)
         {
             return passwordEncrypted;
         }
 
-        protected virtual byte[] Encrypt(string password, byte[]? assoc = null)
+        protected virtual string Encrypt(string password, byte[]? assoc = null)
         {
-            return Encoding.ASCII.GetBytes(password);
+            return password;
         }
 
 
@@ -73,16 +75,15 @@ namespace FugleNET.Keyrings
 
             try
             {
-                var passwordBase64 = Convert.FromBase64String(data[service][username]);
-              //  var passwordEncrypted = Encoding.UTF8.GetBytes(passwordBase64);
+                var passwordBase64 = data[service][username];
 
                 try
                 {
-                    password = Encoding.UTF8.GetString(Decrypt(passwordBase64, assoc));
+                    password = Decrypt(passwordBase64, assoc);
                 }
                 catch (Exception e)
                 {
-                    password = Encoding.UTF8.GetString(Decrypt(passwordBase64));
+                    password = Decrypt(passwordBase64);
                 }
             }
             catch
@@ -108,9 +109,8 @@ namespace FugleNET.Keyrings
 
             var assoc = GenerateAssoc(service, username);
             var passwordEncrypted = Encrypt(password, assoc);
-            var passwordBase64 = Convert.ToBase64String(passwordEncrypted);
 
-            WriteConfigValue(service, username, passwordBase64);
+            WriteConfigValue(service, username, passwordEncrypted);
         }
 
         protected void WriteConfigValue(string service, string key, string value)
@@ -137,7 +137,7 @@ namespace FugleNET.Keyrings
         private void EnsureFilePath()
         {
             var storageRoot = Path.GetDirectoryName(FilePath);
-            var needStorageRoot = !string.IsNullOrEmpty(storageRoot) && File.GetAttributes(storageRoot) != FileAttributes.Directory;
+            var needStorageRoot = !string.IsNullOrEmpty(storageRoot) && !Directory.Exists(storageRoot);
             if (needStorageRoot)
             {
                 Directory.CreateDirectory(storageRoot!);

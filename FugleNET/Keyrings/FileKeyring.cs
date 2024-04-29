@@ -1,5 +1,7 @@
 ﻿using IniParser;
 using IniParser.Model;
+using System;
+using System.IO;
 
 namespace FugleNET.Keyrings
 {
@@ -10,7 +12,7 @@ namespace FugleNET.Keyrings
         public FileKeyring()
         {
             _filename = "crypted_pass.ini";
-            FilePath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), _filename);
+            FilePath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FugleNet", _filename);
         }
 
         protected override void InitKeyring()

@@ -2,6 +2,10 @@
 using FugleNET.PythonModels;
 using IniParser.Model;
 using Python.Runtime;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using IniParser;
 
 namespace FugleNET
 {
@@ -11,8 +15,16 @@ namespace FugleNET
 
         private dynamic _core;
 
-        public FugleSDK(IniData config)
+        public FugleSDK(string configPath)
         {
+            if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+            {
+                throw new Exception("please ensure your 'configPath' is valid");
+            }
+
+            var dataParser = new FileIniDataParser();
+            var config = dataParser.ReadFile(configPath);
+
             ValidateConfig(config);
             _AID = config["User"]["Account"];
 
@@ -70,24 +82,13 @@ namespace FugleNET
             }
         }
 
-        public object CertInfo()
+        public CertInfo CertInfo()
         {
             using (Py.GIL())
             {
-                return _core.get_certinfo();
+                string json = _core.get_certinfo().As<string>();
+                return json.FromJson<CertInfo>()!;
             }
-        }
-
-        private string ConvertTradeNo(TradeType trade)
-        {
-            return trade switch
-            {
-                TradeType.Cash => "0",
-                TradeType.Margin => "3",
-                TradeType.Short => "4",
-                TradeType.DayTrading => "9",
-                TradeType.DayTradingSell => "A"
-            };
         }
 
         private static void InitPython()

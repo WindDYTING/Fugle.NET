@@ -1,7 +1,6 @@
 ﻿using System;
 using FugleNET;
 using FugleNET.Models;
-using IniParser;
 
 namespace Sample
 {
@@ -9,10 +8,7 @@ namespace Sample
     {
         static void Main(string[] args)
         {
-            var config = new FileIniDataParser();
-            var data = config.ReadFile("config.simulation.ini");
-
-            var sdk = new FugleSDK(data);
+            var sdk = new FugleSDK("config.simulation.ini");
             sdk.Login();
             var info = sdk.CertInfo();
             var ret = sdk.PlaceOrder(new OrderObject
@@ -25,7 +21,7 @@ namespace Sample
                 Quantity = 1
             });
 
-            Console.WriteLine(ret);
+            Console.WriteLine(ret.OrdNo);
         }
     }
 }

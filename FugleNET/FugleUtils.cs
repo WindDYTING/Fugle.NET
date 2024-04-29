@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 using System.Text;
 using FugleNET.Keyrings;
 
@@ -10,7 +11,7 @@ namespace FugleNET
 
         public static void SetupKeyring(string userAccount)
         {
-            Kr = new CryptFileKeyring
+            Kr = new CryptFileKeyring()
             {
                 KeyringKey = Environment.GetEnvironmentVariable("KEYRING_CRYPTFILE_PASSWORD") ??
                             HashValue(userAccount)

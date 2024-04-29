@@ -1,11 +1,13 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FugleNET.Keyrings
 {
     public class CryptFileKeyring : FileKeyring
     {
-        protected override byte[] Encrypt(string password, byte[]? assoc=null)
+        protected override string Encrypt(string password, byte[]? assoc = null)
         {
             var salt = CreateSalt();
             var cipher = new ArgonAESEncryption().CreateCipher(KeyringKey, salt);
@@ -24,12 +26,12 @@ namespace FugleNET.Keyrings
                 {"Nonce", Convert.ToBase64String(nonce)}
             }.ToJson();
 
-            return Encoding.UTF8.GetBytes(data);
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(data));
         }
 
-        protected override byte[] Decrypt(byte[] passwordEncrypted, byte[]? assoc = null)
+        protected override string Decrypt(string passwordEncrypted, byte[]? assoc = null)
         {
-            var data = Encoding.UTF8.GetString(passwordEncrypted).FromJson<Dictionary<string, object>>();
+            var data = Encoding.UTF8.GetString(Convert.FromBase64String(passwordEncrypted)).FromJson<Dictionary<string, object>>();
             foreach (var (key, value) in data)
             {
                 data[key] = Convert.FromBase64String(value.ToString());
@@ -43,7 +45,7 @@ namespace FugleNET.Keyrings
             var plainText = new byte[cipherText.Length];
 
             cipher.Decrypt(nonce, cipherText, mac, plainText, assoc);
-            return plainText;
+            return Encoding.UTF8.GetString(plainText);
         }
 
         private byte[] CreateSalt()
