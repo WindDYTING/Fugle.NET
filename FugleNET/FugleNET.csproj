@@ -14,7 +14,6 @@
     <PackageReference Include="Konscious.Security.Cryptography.Blake2" Version="1.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="pythonnet" Version="3.0.3" />
-    <PackageReference Include="pythonnet_netstandard_py39_win" Version="2.5.2" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
   </ItemGroup>
 

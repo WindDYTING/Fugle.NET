@@ -5,12 +5,14 @@ using Python.Runtime;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using IniParser;
 
 namespace FugleNET
 {
     public class FugleSDK
     {
+        private const string? DefaultPythonDll = "python39.dll";
         private readonly string _AID;
 
         private dynamic _core;
@@ -94,8 +96,22 @@ namespace FugleNET
         private static void InitPython()
         {
             var home = Environment.GetEnvironmentVariable("PYTHON_HOME", EnvironmentVariableTarget.Machine);
-            Runtime.PythonDLL = Path.Join(home, "python39.dll");
-            PythonEngine.PythonHome = $"{home}";
+            if (string.IsNullOrEmpty(home))
+            {
+                throw new Exception("'PYTHON_HOME' environment variable does not exist");
+            }
+
+            var pythonDll = DefaultPythonDll;
+            var pythonDlls = Directory.GetFiles(home, "python3?.dll", SearchOption.TopDirectoryOnly)
+                .Where(x => !x.EndsWith("python3.dll"))
+                .ToArray();
+            if (pythonDlls.Any())
+            {
+                pythonDll = Path.GetFileName(pythonDlls[0]);
+            }
+
+            Runtime.PythonDLL = Path.Join(home, pythonDll);
+            PythonEngine.PythonHome = home;
             PythonEngine.Initialize();
         }
 

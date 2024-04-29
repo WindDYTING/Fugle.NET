@@ -3,7 +3,7 @@
 一個透過 Python.NET 串接 [Fugle Python API](https://github.com/fugle-dev/fugle-trade-python) 的 C# API。
 
 ## 環境
-* Python 3.9.x
+* Python 3.[7~9]
 * DotNet 5.0
 * pip 安裝套件
 ```
