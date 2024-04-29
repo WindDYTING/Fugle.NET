@@ -54,7 +54,7 @@ namespace FugleNET
 
         public PlaceOrderResult PlaceOrder(OrderObject orderObject)
         {
-            var pyOrderObj = new PythonOrderObject().ToPythonOrder(orderObject);
+            var pyOrderObj = new PythonOrderObject().ConvertFrom(orderObject);
             using (Py.GIL())
             {
                 dynamic fugleTradeOrderScript = Py.Import("fugle_trade.order");
