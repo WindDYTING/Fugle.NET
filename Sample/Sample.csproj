@@ -10,6 +10,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="config.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="config.simulation.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

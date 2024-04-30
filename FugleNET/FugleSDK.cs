@@ -1,12 +1,12 @@
 ﻿using FugleNET.Models;
 using FugleNET.PythonModels;
+using IniParser;
 using IniParser.Model;
 using Python.Runtime;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using IniParser;
 
 namespace FugleNET
 {
@@ -52,6 +52,11 @@ namespace FugleNET
             }
         }
 
+        /// <summary>
+        /// 送出委託。
+        /// </summary>
+        /// <param name="orderObject">委託內容</param>
+        /// <returns></returns>
         public PlaceOrderResult PlaceOrder(OrderObject orderObject)
         {
             var pyOrderObj = new PythonOrderObject().ConvertFrom(orderObject);
@@ -75,6 +80,25 @@ namespace FugleNET
             }
         }
 
+        /// <summary>
+        /// 取得委託列表。
+        /// </summary>
+        /// <returns></returns>
+        public OrderResult[] GetOrderResult()
+        {
+            using (Py.GIL())
+            {
+                string orderRes = _core.get_order_results().As<string>();
+                var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
+                //data = data!.FromJson<Dictionary<string, object>>()!["order_results"].ToString();
+                //return data.FromJson<OrderResult[]>();
+                return data!.FromJson<Dictionary<string, OrderResult[]>>()!["order_results"];
+            }
+        }
+
+        /// <summary>
+        /// 登入
+        /// </summary>
         public void Login()
         {
             var password = FugleUtils.GetPassword("fugle_trade_sdk:account", _AID);
@@ -84,6 +108,10 @@ namespace FugleNET
             }
         }
 
+        /// <summary>
+        /// 取得憑證相關資訊。
+        /// </summary>
+        /// <returns></returns>
         public CertInfo CertInfo()
         {
             using (Py.GIL())

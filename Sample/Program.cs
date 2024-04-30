@@ -10,14 +10,13 @@ namespace Sample
         {
             var sdk = new FugleSDK("config.simulation.ini");
             sdk.Login();
-            var info = sdk.CertInfo();
+            var info = sdk.GetOrderResult();
             var ret = sdk.PlaceOrder(new OrderObject
             {
                 ApCode = ApCode.AfterMarket,
                 BuyOrSell = ActionSide.Buy,
                 PType = PriceFlag.Limit,
-                Price = null,
-                StockNo = "2330",
+                StockNo = "2888",
                 Quantity = 1
             });
 
