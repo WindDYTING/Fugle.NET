@@ -3,7 +3,7 @@
 一個透過 Python.NET 串接 [Fugle Python API](https://github.com/fugle-dev/fugle-trade-python) 的 C# API。
 
 ## 環境
-* Python 3.[7~9]
+* Python 3.7 ~ 3.9
 * DotNet 5.0
 * pip 安裝套件
 ```
@@ -20,16 +20,12 @@ set PYTHON_HOME = "安裝 python 的目錄 <ex>: C:\Users\user1\AppData\Local\Pr
 using System;
 using FugleNET;
 using FugleNET.Models;
-using IniParser;
 
 internal class Program
 {
     static void Main(string[] args)
     {
-        var config = new FileIniDataParser();
-        var data = config.ReadFile("config.simulation.ini");
-
-        var sdk = new FugleSDK(data);
+        var sdk = new FugleSDK("config.simulation.ini");
         sdk.Login();
         var ret = sdk.PlaceOrder(new OrderObject
         {
@@ -41,7 +37,7 @@ internal class Program
             Quantity = 1
         });
 
-        Console.WriteLine(ret);
+        Console.WriteLine(ret.OrdNo);
     }
 }
 ```
