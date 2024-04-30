@@ -90,8 +90,6 @@ namespace FugleNET
             {
                 string orderRes = _core.get_order_results().As<string>();
                 var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
-                //data = data!.FromJson<Dictionary<string, object>>()!["order_results"].ToString();
-                //return data.FromJson<OrderResult[]>();
                 return data!.FromJson<Dictionary<string, OrderResult[]>>()!["order_results"];
             }
         }
