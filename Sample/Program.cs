@@ -8,19 +8,18 @@ namespace Sample
     {
         static void Main(string[] args)
         {
-            var sdk = new FugleSDK("config.simulation.ini");
+            var sdk = new FugleSDK("config.ini");
             sdk.Login();
             var info = sdk.GetOrderResult();
-            var ret = sdk.PlaceOrder(new OrderObject
-            {
-                ApCode = ApCode.AfterMarket,
-                BuyOrSell = ActionSide.Buy,
-                PType = PriceFlag.Limit,
-                StockNo = "2888",
-                Quantity = 1
-            });
-
-            Console.WriteLine(ret.OrdNo);
+            //var ret = sdk.PlaceOrder(new OrderObject
+            //{
+            //    ApCode = ApCode.AfterMarket,
+            //    BuyOrSell = ActionSide.Buy,
+            //    PType = PriceFlag.Limit,
+            //    StockNo = "2888",
+            //    Quantity = 1
+            //});
+            //Console.WriteLine(ret.OrdNo);
         }
     }
 }

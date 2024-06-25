@@ -7,7 +7,7 @@ namespace FugleNET
 {
     public static class FugleUtils
     {
-        private static Keyring Kr { get; set; }
+        internal static Keyring Kr { get; set; }
 
         public static void SetupKeyring(string userAccount)
         {

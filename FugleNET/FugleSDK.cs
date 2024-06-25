@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using FugleNET.Logging;
 
 namespace FugleNET
 {
@@ -16,6 +17,8 @@ namespace FugleNET
         private readonly string _AID;
 
         private dynamic _core;
+
+        public ILogger Logger { get; set; } = new DefaultConsoleLogger();
 
         public FugleSDK(string configPath)
         {
@@ -117,6 +120,11 @@ namespace FugleNET
                 string json = _core.get_certinfo().As<string>();
                 return json.FromJson<CertInfo>()!;
             }
+        }
+
+        public void ResetPassword()
+        {
+            FugleUtils.SetPassword(_AID);
         }
 
         private static void InitPython()
