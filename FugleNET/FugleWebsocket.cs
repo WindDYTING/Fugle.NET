@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FugleNET.Logging;
 using FugleNET.Models;
 using FugleNET.Websockets;
 
@@ -18,7 +19,6 @@ namespace FugleNET
             _logger = logger;
             _waitAuthenticated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             _transport = new WebsocketsTransport(logger);
-            _transport.OnMessage += OnMessage;
         }
 
         private void OnMessage(string message)
@@ -75,18 +75,17 @@ namespace FugleNET
             _waitAuthenticated.TrySetResult();
         }
 
-        public static async Task<FugleWebsocket> StartAsync(string apiKey, ILogger logger)
+        public static async Task<FugleWebsocket> StartAsync(string apiKey, ILogger? logger=null)
         {
             Checks.ThrowIsBlank(apiKey);
-            Checks.ThrowIsNull(logger);
 
-            var socket = new FugleWebsocket(logger);
+            var socket = new FugleWebsocket(logger ?? new DefaultConsoleLogger());
             await socket._transport.StartAsync(new Uri(ServerUrl))
                 .ContinueWith(async _ =>
                 {
                     await socket.AuthAsync(apiKey);
                     await socket._waitAuthenticated.Task;
-                }, TaskContinuationOptions.RunContinuationsAsynchronously);
+                }, TaskContinuationOptions.RunContinuationsAsynchronously).ConfigureAwait(false);
             return socket;
         }
 
@@ -100,7 +99,7 @@ namespace FugleNET
                     apikey = apiKey
                 }
             }.ToJson();
-            await _transport.SendAsync(json);
+            await _transport.SendAsync(json).ConfigureAwait(false);
         }
 
         public void Auth(string apiKey)
@@ -118,7 +117,6 @@ namespace FugleNET
 
         public async ValueTask DisposeAsync()
         {
-            _transport.OnMessage -= OnMessage;
             await _transport.DisposeAsync();
         }
     }

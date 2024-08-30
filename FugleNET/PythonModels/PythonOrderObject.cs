@@ -26,9 +26,9 @@ namespace FugleNET.PythonModels
         public string stock_no { get; set; }
         public float? price { get; set; }
         public dynamic bs_flag { get; set; }
+        public string user_def { get; set; }
 
-
-        public PythonOrderObject ConvertFrom(OrderObject order)
+    public PythonOrderObject ConvertFrom(OrderObject order)
         {
             buy_sell = order.BuyOrSell == ActionSide.Buy ? buy_sell.Buy : buy_sell.Sell;
             ap_code = order.ApCode switch
@@ -64,6 +64,7 @@ namespace FugleNET.PythonModels
             stock_no = order.StockNo;
             price = order.Price;
             quantity = order.Quantity;
+            user_def = order.UserDef;
             return this;
         }
     }

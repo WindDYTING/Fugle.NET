@@ -17,5 +17,7 @@
         public BSFlag BSFlag { get; set; } = BSFlag.ROD;
 
         public TradeType Trade { get; set; } = TradeType.Cash;
+
+        public string UserDef { get; set; } = string.Empty;
     }
 }

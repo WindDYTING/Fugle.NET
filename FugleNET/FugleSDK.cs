@@ -16,7 +16,7 @@ namespace FugleNET
         private const string? DefaultPythonDll = "python39.dll";
         private readonly string _AID;
 
-        private dynamic _core;
+        private readonly dynamic _core;
 
         public ILogger Logger { get; set; } = new DefaultConsoleLogger();
 
@@ -74,7 +74,8 @@ namespace FugleNET
                     pyOrderObj.ap_code,
                     pyOrderObj.bs_flag,
                     pyOrderObj.price_flag,
-                    pyOrderObj.trade
+                    pyOrderObj.trade,
+                    pyOrderObj.user_def
                 );
 
                 var json = _core.order(order).As<string>();

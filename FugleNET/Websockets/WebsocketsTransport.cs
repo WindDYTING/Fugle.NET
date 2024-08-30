@@ -18,7 +18,7 @@ namespace FugleNET.Websockets
         private IDuplexPipe _application;
         private ClientWebSocket _socket;
 
-        public event Action<string> OnMessage;
+        internal Task Running { get; set; } = Task.CompletedTask;
 
         public PipeOptions SocketPipeOptions { get; set; } = new(
             pauseWriterThreshold: DefaultBufferSize,
@@ -26,9 +26,11 @@ namespace FugleNET.Websockets
             readerScheduler: PipeScheduler.ThreadPool,
             useSynchronizationContext: false);
 
-        public Task Running { get; set; } = Task.CompletedTask;
+        // public Task ProcessMessageTask { get; set; } = Task.CompletedTask;
 
-        public Task ProcessMessageTask { get; set; } = Task.CompletedTask;
+        public PipeReader Input => _transport.Input;
+
+        public PipeWriter Output => _transport.Output;
 
         public WebsocketsTransport(ILogger logger)
         {
@@ -60,7 +62,7 @@ namespace FugleNET.Websockets
         public async Task StartAsync(Uri serverUri)
         {
             _socket = new ClientWebSocket();
-            await _socket.ConnectAsync(serverUri, CancellationToken.None);
+            await _socket.ConnectAsync(serverUri, CancellationToken.None).ConfigureAwait(false);
 
             if (_transport is null)
             {
@@ -70,37 +72,45 @@ namespace FugleNET.Websockets
             }
 
             Running = ProcessWebsocketAsync(_socket, serverUri);
-            ProcessMessageTask = ProcessMessageAsync();
+            //ProcessMessageTask = ProcessMessageAsync();
         }
 
         private async Task ProcessMessageAsync()
         {
-            while (!_cts.IsCancellationRequested)
+            try
             {
-                var result = await _transport.Input.ReadAsync().ConfigureAwait(false);
-                var buffer = result.Buffer;
-                if (buffer.IsEmpty && result.IsCompleted)
+                while (!_cts.IsCancellationRequested)
                 {
-                    break;
+                    var result = await _transport.Input.ReadAsync().ConfigureAwait(false);
+                    var buffer = result.Buffer;
+                    if (buffer.IsEmpty && result.IsCompleted)
+                    {
+                        break;
+                    }
+
+                    foreach (var segment in buffer)
+                    {
+                        var msg = Encoding.UTF8.GetString(segment.Span);
+                        try
+                        {
+                            OnMessage?.Invoke(msg);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.Error(e.ToString());
+                        }
+                    }
+
+                    _transport.Input.AdvanceTo(buffer.End);
                 }
 
-                foreach (var segment in buffer)
-                {
-                    var msg = Encoding.UTF8.GetString(segment.Span);
-                    try
-                    {
-                        OnMessage?.Invoke(msg);
-                    }
-                    catch (Exception e)
-                    {
-                        
-                    }
-                }
-
-                _transport.Input.AdvanceTo(buffer.End);
+                _transport.Input.Complete();
             }
-
-            _transport.Input.Complete();
+            catch (Exception e)
+            {
+                _logger.Error(e.ToString());
+                throw;
+            }
         }
 
         public async Task StopAsync()
@@ -350,7 +360,7 @@ namespace FugleNET.Websockets
             await CastAndDispose(_cts);
             await CastAndDispose(_socket);
             await CastAndDispose(Running);
-            await CastAndDispose(ProcessMessageTask);
+            //await CastAndDispose(ProcessMessageTask);
 
             return;
 

@@ -170,5 +170,8 @@ namespace FugleNET.Models
         /// </summary>
         [JsonProperty("work_date")]
         public string WorkDate { get; set; }
+
+        [JsonProperty("memo")]
+        public string UserDef { get; set; }
     }
 }

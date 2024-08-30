@@ -15,11 +15,11 @@ namespace FugleNET.Logging
         {
             if (!IsEnabled(level)) return;
 
-            var textColor = Console.ForegroundColor;
+            var oriTextColor = Console.ForegroundColor;
 
             Console.ForegroundColor = GetColorFromLevel(level);
             Console.WriteLine($"{DateTime.Now:O} [{level}] {message}");
-            Console.ForegroundColor = textColor;
+            Console.ForegroundColor = oriTextColor;
         }
 
         private ConsoleColor GetColorFromLevel(LoggingLevel level) => level switch
