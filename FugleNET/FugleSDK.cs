@@ -89,7 +89,7 @@ namespace FugleNET
         /// 取得委託列表。
         /// </summary>
         /// <returns></returns>
-        public OrderResult[] GetOrderResult()
+        public OrderResult[] GetOrderResults()
         {
             string orderRes = _core.get_order_results().As<string>()!;
             var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
