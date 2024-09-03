@@ -2,7 +2,7 @@
 
 namespace FugleNET.Models
 {
-    public class PlaceOrderResult
+    public record PlaceOrderResult
     {
         [JsonProperty("ord_date")]
         public string OrdDate { get; set; }

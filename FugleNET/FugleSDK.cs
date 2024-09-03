@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FugleNET.Logging;
+using System.Collections;
 
 namespace FugleNET
 {
@@ -16,9 +17,17 @@ namespace FugleNET
         private const string? DefaultPythonDll = "python39.dll";
         private readonly string _AID;
 
-        private readonly dynamic _core;
+        private static dynamic _core;
 
         public ILogger Logger { get; set; } = new DefaultConsoleLogger();
+
+        static FugleSDK()
+        {
+            InitPython();
+            FuglePyCore.CoreModule = Py.Import("fugle_trade_core");
+            FuglePyCore.ConstantModule = Py.Import("fugle_trade.constant");
+            FuglePyCore.OrderModule = Py.Import("fugle_trade.order");
+        }
 
         public FugleSDK(string configPath)
         {
@@ -40,19 +49,14 @@ namespace FugleNET
             
             FugleUtils.SetupKeyring(_AID);
             FugleUtils.CheckPassword(_AID);
-
-            InitPython();
-            using (Py.GIL())
-            {
-                dynamic module = Py.Import("fugle_trade_core");
-                _core = module.CoreSDK(
-                    config["Core"]["Entry"],
-                    config["User"]["Account"],
-                    config["Cert"]["Path"],
-                    FugleUtils.GetPassword("fugle_trade_sdk:cert", _AID),
-                    config["Api"]["Key"],
-                    config["Api"]["Secret"]);
-            }
+           
+            _core = FuglePyCore.CoreModule.CoreSDK(
+                config["Core"]["Entry"],
+                config["User"]["Account"],
+                config["Cert"]["Path"],
+                FugleUtils.GetPassword("fugle_trade_sdk:cert", _AID),
+                config["Api"]["Key"],
+                config["Api"]["Secret"]);
         }
 
         /// <summary>
@@ -62,26 +66,23 @@ namespace FugleNET
         /// <returns></returns>
         public PlaceOrderResult PlaceOrder(OrderObject orderObject)
         {
-            var pyOrderObj = new PythonOrderObject().ConvertFrom(orderObject);
-            using (Py.GIL())
-            {
-                dynamic fugleTradeOrderScript = Py.Import("fugle_trade.order");
-                dynamic order = fugleTradeOrderScript.OrderObject(
-                    pyOrderObj.buy_sell,
-                    pyOrderObj.price,
-                    pyOrderObj.stock_no,
-                    pyOrderObj.quantity,
-                    pyOrderObj.ap_code,
-                    pyOrderObj.bs_flag,
-                    pyOrderObj.price_flag,
-                    pyOrderObj.trade,
-                    pyOrderObj.user_def
-                );
+            var pyOrderObj = PythonOrderObject.CreateFrom(orderObject);
+            dynamic fugleTradeOrderScript = FuglePyCore.OrderModule;
+            dynamic order = fugleTradeOrderScript.OrderObject(
+                pyOrderObj.buy_sell,
+                pyOrderObj.price,
+                pyOrderObj.stock_no,
+                pyOrderObj.quantity,
+                pyOrderObj.ap_code,
+                pyOrderObj.bs_flag,
+                pyOrderObj.price_flag,
+                pyOrderObj.trade,
+                pyOrderObj.user_def
+            );
 
-                var json = _core.order(order).As<string>();
-                string data = Utils.FromJson<Dictionary<string, object>>(json)["data"].ToString();
-                return data.FromJson<PlaceOrderResult>()!;
-            }
+            var json = _core.order(order).As<string>();
+            string data = Utils.FromJson<Dictionary<string, object>>(json)["data"].ToString();
+            return data.FromJson<PlaceOrderResult>()!;
         }
 
         /// <summary>
@@ -90,12 +91,9 @@ namespace FugleNET
         /// <returns></returns>
         public OrderResult[] GetOrderResult()
         {
-            using (Py.GIL())
-            {
-                string orderRes = _core.get_order_results().As<string>();
-                var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
-                return data!.FromJson<Dictionary<string, OrderResult[]>>()!["order_results"];
-            }
+            string orderRes = _core.get_order_results().As<string>()!;
+            var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
+            return data!.FromJson<Dictionary<string, OrderResult[]>>()!["order_results"];
         }
 
         /// <summary>
@@ -104,10 +102,7 @@ namespace FugleNET
         public void Login()
         {
             var password = FugleUtils.GetPassword("fugle_trade_sdk:account", _AID);
-            using (Py.GIL())
-            {
-                _core.login(_AID, password);
-            }
+            _core.login(_AID, password);
         }
 
         /// <summary>
@@ -116,13 +111,77 @@ namespace FugleNET
         /// <returns></returns>
         public CertInfo CertInfo()
         {
-            using (Py.GIL())
-            {
-                string json = _core.get_certinfo().As<string>();
-                return json.FromJson<CertInfo>()!;
-            }
+            string json = _core.get_certinfo().As<string>()!;
+            return json.FromJson<CertInfo>()!;
         }
 
+        /// <summary>
+        /// 取得餘額
+        /// </summary>
+        public BalanceInfo GetBalance()
+        {
+            var json = _core.get_balance().As<string>()!;
+            var data = Utils.FromJson<Dictionary<string, object>>(json)["data"].ToString()!;
+            return Utils.FromJson<BalanceInfo>(data)!;
+        }
+
+        /// <summary>
+        /// 取得 start_date, end_date 時間範圍內的歷史委託列表，無法查詢已刪除及預約單。<para/>
+        /// 取得特定日期區間的歷史委託列表，目前提供查詢的日期範圍，以 180 日為限！ <para/>
+        /// 若超過這個時間範圍區間，會得到 AW00003 的錯誤訊息！
+        /// </summary>
+        /// <param name="start">格式為 yyyy-MM-dd 的開始日期</param>
+        /// <param name="end">格式為 yyyy-MM-dd 的結束日期</param>
+        /// <returns></returns>
+        public HistoryOrderResult[] GetOrderResultsByDate(string start, string end)
+        {
+            string orderRes = _core.get_order_result_history(start, end, "0").As<string>()!;
+            var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
+            return data!.FromJson<Dictionary<string, HistoryOrderResult[]>>()!["order_result_history"];
+        }
+
+        /// <summary>
+        /// 取得用戶交易額度, 交易權限相關資訊。
+        /// </summary>
+        /// <returns></returns>
+        public TradeStatusResult GetTradeStatus()
+        {
+            var json = _core.get_trade_status().As<string>()!;
+            var data = Utils.FromJson<Dictionary<string, object>>(json)["data"].ToString()!;
+            return Utils.FromJson<TradeStatusResult>(data)!;
+        }
+
+        /// <summary>
+        /// 取得指定時間範圍內的成交明細。
+        /// </summary>
+        /// <param name="queryRange">時間區間，目前有效數值為 "0d"(當日)、"3d"、"1m"、"3m"</param>
+        /// <returns></returns>
+
+        public TransactionResult[] GetTransactions(string queryRange)
+        {
+            string orderRes = _core.get_transactions(queryRange).As<string>()!;
+            var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
+            return data!.FromJson<Dictionary<string, TransactionResult[]>>()!["mat_sums"];
+        }
+
+        /// <summary>
+        /// 取得 start_date, end_date 時間範圍內的成交明細。
+        /// </summary>
+        /// <param name="start">格式為 yyyy-MM-dd 的開始日期</param>
+        /// <param name="end">格式為 yyyy-MM-dd 的結束日期</param>
+        /// <returns></returns>
+        public TransactionResult[] GetTransactionsByDate(string start, string end)
+        {
+            string orderRes = _core.get_transactions_by_date(start, end).As<string>()!;
+            var data = orderRes.FromJson<Dictionary<string, object>>()!["data"].ToString();
+            return data!.FromJson<Dictionary<string, TransactionResult[]>>()!["mat_sums"];
+        }
+
+        
+
+        /// <summary>
+        /// 重設密碼
+        /// </summary>
         public void ResetPassword()
         {
             FugleUtils.SetPassword(_AID);

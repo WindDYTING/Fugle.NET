@@ -85,7 +85,7 @@ namespace FugleNET
                 {
                     await socket.AuthAsync(apiKey);
                     await socket._waitAuthenticated.Task;
-                }, TaskContinuationOptions.RunContinuationsAsynchronously).ConfigureAwait(false);
+                }, TaskContinuationOptions.ExecuteSynchronously).ConfigureAwait(false);
             return socket;
         }
 

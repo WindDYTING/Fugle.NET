@@ -1,6 +1,6 @@
 ﻿namespace FugleNET.Models
 {
-    public class OrderObject
+    public record OrderObject
     {
         public ApCode ApCode { get; set; } = ApCode.Common;
 

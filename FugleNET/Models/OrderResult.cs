@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace FugleNET.Models
 {
-    public class OrderResult
+    public record OrderResult
     {
         /// <summary>
         /// 盤別

@@ -42,6 +42,7 @@ namespace FugleNET.Websockets
         {
             if (!WebsocketCanBeSend(_socket))
             {
+                _logger.WebsocketCannotSent();
                 return;
             }
 
@@ -54,6 +55,7 @@ namespace FugleNET.Websockets
         {
             if (!WebsocketCanBeSend(_socket))
             {
+                _logger.WebsocketCannotSent();
                 return;
             }
             SendAsync(msg).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -93,7 +95,7 @@ namespace FugleNET.Websockets
                         var msg = Encoding.UTF8.GetString(segment.Span);
                         try
                         {
-                            OnMessage?.Invoke(msg);
+                            //OnMessage?.Invoke(msg);
                         }
                         catch (Exception e)
                         {
