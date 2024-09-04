@@ -4,7 +4,7 @@
 
 ## 環境
 * Python 3.7 ~ 3.9
-* DotNet 5.0
+* DotNet 6.0
 * pip 安裝套件
 ```
 pip install fugle_trade
