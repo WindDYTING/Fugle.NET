@@ -1,10 +1,11 @@
-﻿using System;
+﻿using IniParser;
+using IniParser.Model;
+using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
-using IniParser;
-using IniParser.Model;
 
 namespace FugleNET.Keyrings
 {
@@ -22,12 +23,12 @@ namespace FugleNET.Keyrings
 
         public string Scheme { get; set; } = "[PBKDF2] AES256.CFB";
 
-        protected virtual string Decrypt(string passwordEncrypted, byte[]? assoc = null)
+        protected virtual string Decrypt(string passwordEncrypted, byte[] assoc = null)
         {
             return passwordEncrypted;
         }
 
-        protected virtual string Encrypt(string password, byte[]? assoc = null)
+        protected virtual string Encrypt(string password, byte[] assoc = null)
         {
             return password;
         }
@@ -58,7 +59,7 @@ namespace FugleNET.Keyrings
 
         protected abstract void InitKeyring();
 
-
+#nullable enable
         public string? GetPassword(string service, string username)
         {
             string? password;
@@ -75,13 +76,14 @@ namespace FugleNET.Keyrings
 
             try
             {
+                data = Checks.EnsureNotNull(data);
                 var passwordBase64 = data[service][username];
 
                 try
                 {
                     password = Decrypt(passwordBase64, assoc);
                 }
-                catch (Exception e)
+                catch
                 {
                     password = Decrypt(passwordBase64);
                 }
@@ -93,6 +95,7 @@ namespace FugleNET.Keyrings
 
             return password;
         }
+#nullable disable
 
         public void SetPassword(string service, string username, string password)
         {
@@ -115,7 +118,12 @@ namespace FugleNET.Keyrings
 
         protected void WriteConfigValue(string service, string key, string value)
         {
-            EnsureFilePath();
+            if (OperatingSystem.IsWindows())
+                EnsureFilePath();
+            else if (OperatingSystem.IsLinux())
+                EnsureFilePathOnlyLinux();
+            else
+                throw new PlatformNotSupportedException();
 
             var config = new FileIniDataParser();
             var configData = config.ReadFile(FilePath);
@@ -134,6 +142,26 @@ namespace FugleNET.Keyrings
             config.WriteData(f, configData);
         }
 
+        [SupportedOSPlatform("linux")]
+        private void EnsureFilePathOnlyLinux()
+        {
+            const int _600 = Utils.S_IRUSR | Utils.S_IWUSR;
+            var storageRoot = Path.GetDirectoryName(FilePath);
+            var needStorageRoot = !string.IsNullOrEmpty(storageRoot) && !Directory.Exists(storageRoot);
+            if (needStorageRoot)
+            {
+                Directory.CreateDirectory(storageRoot!);
+            }
+
+            if (!File.Exists(FilePath))
+            {
+                using (_ = File.Open(FilePath, FileMode.Create)) {}
+
+                _ = Utils.chmod(Path.GetFullPath(FilePath), _600);
+            }
+        }
+
+        [SupportedOSPlatform("windows")]
         private void EnsureFilePath()
         {
             var storageRoot = Path.GetDirectoryName(FilePath);
@@ -148,7 +176,7 @@ namespace FugleNET.Keyrings
                 using (_ = File.Open(FilePath, FileMode.Create)) {}
 
                 var fSecurity = new FileSecurity(FilePath, AccessControlSections.Owner | AccessControlSections.Access);
-                var owner = fSecurity.GetOwner(typeof(NTAccount));
+                var owner = fSecurity.GetOwner(typeof(NTAccount))!;
                 fSecurity.ModifyAccessRule(AccessControlModification.Add,
                     new FileSystemAccessRule(owner, FileSystemRights.Read | FileSystemRights.Write,
                         AccessControlType.Allow),

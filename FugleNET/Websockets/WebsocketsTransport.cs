@@ -226,6 +226,7 @@ namespace FugleNET.Websockets
             }
         }
 
+        #nullable enable
         private async Task StartSendingAsync(WebSocket ws, PipeReader reader)
         {
             Exception? error = null;
@@ -300,6 +301,7 @@ namespace FugleNET.Websockets
                 }
             }
         }
+        #nullable disable
 
         private async Task StartReceiveAsync(WebSocket ws, PipeWriter writer)
         {

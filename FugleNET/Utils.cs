@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using Newtonsoft.Json;
+
+#nullable enable
 
 namespace FugleNET
 {
@@ -24,6 +27,7 @@ namespace FugleNET
         {
             return JsonConvert.DeserializeObject<T>(json);
         }
+        
 
         public static string Escape(string value)
         {
@@ -72,5 +76,24 @@ namespace FugleNET
 
             return password.ToString();
         }
+
+         
+        [DllImport("libc", SetLastError = true)]
+        internal static extern int chmod(string pathname, int mode);
+
+        // user permissions
+        internal const int S_IRUSR = 0x100;
+        internal const int S_IWUSR = 0x80;
+        internal const int S_IXUSR = 0x40;
+         
+        // group permission
+        internal const int S_IRGRP = 0x20;
+        internal const int S_IWGRP = 0x10;
+        internal const int S_IXGRP = 0x8;
+         
+        // other permissions
+        internal const int S_IROTH = 0x4;
+        internal const int S_IWOTH = 0x2;
+        internal const int S_IXOTH = 0x1;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -32,9 +33,9 @@ namespace FugleNET.Keyrings
         protected override string Decrypt(string passwordEncrypted, byte[]? assoc = null)
         {
             var data = Encoding.UTF8.GetString(Convert.FromBase64String(passwordEncrypted)).FromJson<Dictionary<string, object>>();
-            foreach (var (key, value) in data)
+            foreach (var (key, value) in data!)
             {
-                data[key] = Convert.FromBase64String(value.ToString());
+                data[key] = Convert.FromBase64String(value.ToString()!);
             }
 
             var salt = (byte[])data["Salt"];
@@ -51,8 +52,7 @@ namespace FugleNET.Keyrings
         private byte[] CreateSalt()
         {
             var bytes = new byte[16];
-            var rng = new RNGCryptoServiceProvider();
-            rng.GetBytes(bytes);
+            RandomNumberGenerator.Fill(bytes);
             return bytes;
         }
     }

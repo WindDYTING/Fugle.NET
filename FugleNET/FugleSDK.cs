@@ -1,4 +1,5 @@
-﻿using FugleNET.Models;
+﻿using FugleNET.Logging;
+using FugleNET.Models;
 using FugleNET.PythonModels;
 using IniParser;
 using IniParser.Model;
@@ -7,21 +8,21 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using FugleNET.Logging;
-using System.Collections;
 
 namespace FugleNET
 {
     public class FugleSDK
     {
-        private const string? DefaultPythonDll = "python39.dll";
-        private readonly string _AID;
+        private const string DefaultPythonDll = "python39.dll";
+        private readonly string _aid;
 
         private static dynamic _core;
 
         public ILogger Logger { get; set; } = new DefaultConsoleLogger();
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static FugleSDK()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             InitPython();
             FuglePyCore.CoreModule = Py.Import("fugle_trade_core");
@@ -40,21 +41,21 @@ namespace FugleNET
             var config = dataParser.ReadFile(configPath);
 
             ValidateConfig(config);
-            _AID = config["User"]["Account"];
+            _aid = config["User"]["Account"];
 
-            if (string.IsNullOrEmpty(_AID))
+            if (string.IsNullOrEmpty(_aid))
             {
                 throw new Exception("please setup your config before using this SDK");
             }
             
-            FugleUtils.SetupKeyring(_AID);
-            FugleUtils.CheckPassword(_AID);
+            FugleUtils.SetupKeyring(_aid);
+            FugleUtils.CheckPassword(_aid);
            
             _core = FuglePyCore.CoreModule.CoreSDK(
                 config["Core"]["Entry"],
                 config["User"]["Account"],
                 config["Cert"]["Path"],
-                FugleUtils.GetPassword("fugle_trade_sdk:cert", _AID),
+                FugleUtils.GetPassword("fugle_trade_sdk:cert", _aid),
                 config["Api"]["Key"],
                 config["Api"]["Secret"]);
         }
@@ -101,8 +102,8 @@ namespace FugleNET
         /// </summary>
         public void Login()
         {
-            var password = FugleUtils.GetPassword("fugle_trade_sdk:account", _AID);
-            _core.login(_AID, password);
+            var password = FugleUtils.GetPassword("fugle_trade_sdk:account", _aid);
+            _core.login(_aid, password);
         }
 
         /// <summary>
@@ -177,14 +178,23 @@ namespace FugleNET
             return data!.FromJson<Dictionary<string, TransactionResult[]>>()!["mat_sums"];
         }
 
-        
+        /// <summary>
+        /// 取得當下的庫存明細。
+        /// </summary>
+        /// <returns></returns>
+        public InventoryResult[] GetInventory()
+        {
+            string json = _core.get_inventories();
+            var data = json.FromJson<Dictionary<string, object>>()!["data"].ToString();
+            return data!.FromJson<Dictionary<string, InventoryResult[]>>()!["stk_sums"];
+        }
 
         /// <summary>
         /// 重設密碼
         /// </summary>
         public void ResetPassword()
         {
-            FugleUtils.SetPassword(_AID);
+            FugleUtils.SetPassword(_aid);
         }
 
         private static void InitPython()

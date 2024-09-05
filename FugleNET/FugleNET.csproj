@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0</TargetFrameworks>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <LangVersion>9.0</LangVersion>
     <AssemblyName>FugleNET</AssemblyName>
     <RootNamespace>FugleNET</RootNamespace>

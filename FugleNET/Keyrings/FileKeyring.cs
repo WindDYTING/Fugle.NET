@@ -7,7 +7,7 @@ namespace FugleNET.Keyrings
 {
     public class FileKeyring : Keyring
     {
-        private string _filename;
+        private readonly string _filename;
 
         public FileKeyring()
         {
@@ -65,13 +65,14 @@ namespace FugleNET.Keyrings
         {
             if (string.IsNullOrEmpty(KeyringKey))
             {
-                if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(KEYRING_CRYPTFILE_PASSWORD)))
+                var keyringCryptFilePassword = Environment.GetEnvironmentVariable(KEYRING_CRYPTFILE_PASSWORD);
+                if (string.IsNullOrEmpty(keyringCryptFilePassword))
                 {
                     KeyringKey = Utils.GetPass("Please enter password for encrypted keyring: ");
                 }
                 else
                 {
-                    KeyringKey = Environment.GetEnvironmentVariable(KEYRING_CRYPTFILE_PASSWORD);
+                    KeyringKey = keyringCryptFilePassword;
                 }
             }
 
@@ -83,7 +84,7 @@ namespace FugleNET.Keyrings
                     throw new Exception("assert");
                 }
             }
-            catch (Exception e)
+            catch
             {
                 KeyringKey = string.Empty;
                 throw new Exception("Incorrect Password");
@@ -104,7 +105,7 @@ namespace FugleNET.Keyrings
             {
                 _ = data[Utils.Escape("keyring-setting")][Utils.Escape("password reference")];
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }
@@ -113,7 +114,7 @@ namespace FugleNET.Keyrings
             {
                 CheckScheme(data);
             }
-            catch (Exception e)
+            catch
             {
                 return true;
             }
@@ -127,7 +128,7 @@ namespace FugleNET.Keyrings
             {
                 FileVersion = data[Utils.Escape("keyring-setting")][Utils.Escape("version")];
             }
-            catch (Exception e)
+            catch
             {
                 return false;
             }
@@ -142,7 +143,7 @@ namespace FugleNET.Keyrings
             {
                 scheme = data[Utils.Escape("keyring-setting")][Utils.Escape("scheme")];
             }
-            catch (Exception e)
+            catch
             {
                 throw new Exception("Encryption scheme missing");
             }

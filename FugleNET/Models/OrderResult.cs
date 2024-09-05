@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
 
 namespace FugleNET.Models
@@ -130,11 +131,13 @@ namespace FugleNET.Models
         [JsonProperty("org_qty_share")]
         public float OrgQtyShare { get; set; }
 
+#nullable enable
         /// <summary>
         /// 預約單編號，預約單時才有值
         /// </summary>
         [JsonProperty("pre_ord_no")]
         public string? PreOrderNo { get; set; }
+#nullable disable
 
         /// <summary>
         /// 價格旗標

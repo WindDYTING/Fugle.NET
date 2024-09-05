@@ -1,11 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace FugleNET
 {
     internal class Checks
     {
+        [return: NotNull]
+        public static T EnsureNotNull<T>(T obj)
+        {
+            ThrowIsNull(obj);
+            return obj;
+        }
+
         public static void ThrowIsNull<T>(T obj)
         {
             if (obj == null) throw new ArgumentNullException(nameof(obj));

@@ -24,9 +24,9 @@ namespace FugleNET
             return Convert.ToHexString(data);
         }
 
-        public static string? GetPassword(string key, string userAccount)
+        public static string GetPassword(string key, string userAccount)
         {
-            return Kr.GetPassword(key, userAccount);
+            return Kr.GetPassword(key, userAccount) ?? throw new Exception("Get password is null.");
         }
 
         public static void CheckPassword(string userAccount)

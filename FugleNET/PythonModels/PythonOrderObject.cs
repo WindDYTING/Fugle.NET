@@ -1,4 +1,5 @@
-﻿using FugleNET.Models;
+﻿using System;
+using FugleNET.Models;
 using Python.Runtime;
 
 namespace FugleNET.PythonModels
@@ -35,6 +36,7 @@ namespace FugleNET.PythonModels
                 ApCode.Odd => ap_code.Odd,
                 ApCode.Emg => ap_code.Emg,
                 ApCode.IntradayOdd => ap_code.IntradayOdd,
+                _ => throw new ArgumentOutOfRangeException(nameof(order.ApCode))
             };
             trade = order.Trade switch
             {
@@ -43,6 +45,7 @@ namespace FugleNET.PythonModels
                 TradeType.Short => trade.Short,
                 TradeType.DayTrading => trade.DayTrading,
                 TradeType.DayTradingSell => trade.DayTradingSell,
+                _ => throw new ArgumentOutOfRangeException(nameof(order.Trade))
             };
             price_flag = order.PType switch
             {
@@ -51,12 +54,14 @@ namespace FugleNET.PythonModels
                 PriceFlag.LimitDown => price_flag.LimitDown,
                 PriceFlag.LimitUp => price_flag.LimitUp,
                 PriceFlag.Market => price_flag.Market,
+                _ => throw new ArgumentOutOfRangeException(nameof(order.PType))
             };
             bs_flag = order.BSFlag switch
             {
                 BSFlag.FOK => bs_flag.FOK,
                 BSFlag.IOC => bs_flag.IOC,
-                BSFlag.ROD => bs_flag.ROD
+                BSFlag.ROD => bs_flag.ROD,
+                _ => throw new ArgumentOutOfRangeException(nameof(order.BSFlag))
             };
             stock_no = order.StockNo;
             price = order.Price;
