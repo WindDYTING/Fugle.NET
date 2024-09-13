@@ -147,9 +147,9 @@ namespace FugleNET
         /// <returns></returns>
         public TradeStatusResult GetTradeStatus()
         {
-            var json = _core.get_trade_status().As<string>()!;
-            var data = Utils.FromJson<Dictionary<string, object>>(json)["data"].ToString()!;
-            return Utils.FromJson<TradeStatusResult>(data)!;
+            string json = _core.get_trade_status().As<string>()!;
+            var data = json.FromJson<Dictionary<string, object>>()["data"].ToString()!;
+            return data.FromJson<TradeStatusResult>()!;
         }
 
         /// <summary>
@@ -190,12 +190,74 @@ namespace FugleNET
         }
 
         /// <summary>
+        /// 取得交割款資訊。
+        /// </summary>
+        /// <returns></returns>
+        public SettlementResult[] GetSettlements()
+        {
+            string json = _core.get_settlements();
+            var data = json.FromJson<Dictionary<string, object>>()!["data"].ToString();
+            return data!.FromJson<Dictionary<string, SettlementResult[]>>()!["settlements"];
+        }
+
+        /// <summary>
+        /// 取得金鑰資訊
+        /// </summary>
+        /// <returns></returns>
+        public KeyInfo GetKeyInfo()
+        {
+            string json = _core.get_key_info().As<string>();
+            return json.FromJson<KeyInfo>();
+        }
+
+        /// <summary>
+        /// 取得主機端的時間
+        /// </summary>
+        /// <returns></returns>
+        public MachineTimeResult GetMachineTime()
+        {
+            string json = _core.get_machine_time().As<string>();
+            return json.FromJson<MachineTimeResult>();
+        }
+
+        /// <summary>
+        /// 修改委託價格。 <para/>
+        /// 市價不能改到其他價格旗標，其他價格旗標不能改成市價 <para/>
+        /// 除了限價，其他價格旗標不能改成原本的 ex: 漲停 -> 漲停, 跌停 -> 跌停 <para/>
+        /// price_flag 在非限價時，target_price 要放 None <para/>
+        /// 注意：只能修改 ROD 限價單的價格。
+        /// </summary>
+        /// <param name="orderResult">委託單資料</param>
+        /// <param name="targetPrice">目標價格</param>
+        /// <param name="priceFlag">價格旗標</param>
+        /// <returns></returns>
+        public ModifyPriceResult ModifyPrice(OrderResult orderResult, float? targetPrice=null,
+            PriceFlag? priceFlag=PriceFlag.Limit)
+        {
+            if (targetPrice is null && priceFlag is null)
+            {
+                throw new Exception("must provide valid arguments");
+            }
+
+            var pyOrderResult = 
+        }
+
+        /// <summary>
         /// 重設密碼
         /// </summary>
         public void ResetPassword()
         {
             FugleUtils.SetPassword(_aid);
         }
+
+        private PythonOrderResult RecoverOrderResult(OrderResult orderResult)
+        {
+            var apCode = orderResult.ApCodeKind;
+            var stockNo = orderResult.StockNo;
+            var unit = _core.get_volume_per_unit(stockNo);
+            var dict = new Dictionary<string, int>();
+
+        } 
 
         private static void InitPython()
         {
