@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace FugleNET
 {
@@ -58,6 +59,47 @@ namespace FugleNET
                 FugleUtils.GetPassword("fugle_trade_sdk:cert", _aid),
                 config["Api"]["Key"],
                 config["Api"]["Secret"]);
+        }
+
+        /// <summary>
+        /// 修改委託價格。 <para/>
+        /// 市價不能改到其他價格旗標，其他價格旗標不能改成市價 <para/>
+        /// 除了限價，其他價格旗標不能改成原本的 ex: 漲停 -> 漲停, 跌停 -> 跌停 <para/>
+        /// price_flag 在非限價時，target_price 要放 None <para/>
+        /// 注意：只能修改 ROD 限價單的價格。
+        /// </summary>
+        /// <param name="inOrderResult">委託單資料</param>
+        /// <param name="targetPrice">目標價格</param>
+        /// <param name="priceFlag">價格旗標</param>
+        /// <returns></returns>
+        public ModifyPriceResult ModifyPrice(in OrderResult inOrderResult, double? targetPrice=null,
+            PriceFlag? priceFlag=PriceFlag.Limit)
+        {
+            if (targetPrice is null && priceFlag is null)
+            {
+                throw new Exception("must provide valid arguments");
+            }
+
+            var orderResult = RecoverOrderResult(inOrderResult);
+            var pythonPriceFlag = ConvertPythonPriceFlag(priceFlag);
+            string json = _core.modify_price(orderResult, targetPrice, pythonPriceFlag).As<string>();
+            var data = json.FromJson<Dictionary<string, object>>()["data"].ToString();
+            return data!.FromJson<ModifyPriceResult>();
+        }
+
+        private static dynamic ConvertPythonPriceFlag(PriceFlag? priceFlag)
+        {
+            dynamic pythonPriceFlag = FuglePyCore.ConstantModule.PriceFlag;
+            pythonPriceFlag = priceFlag switch
+            {
+                PriceFlag.Limit => pythonPriceFlag.Limit,
+                PriceFlag.Flat => pythonPriceFlag.Flat,
+                PriceFlag.LimitDown => pythonPriceFlag.LimitDown,
+                PriceFlag.LimitUp => pythonPriceFlag.LimitUp,
+                PriceFlag.Market => pythonPriceFlag.Market,
+                _ => throw new ArgumentOutOfRangeException(nameof(priceFlag))
+            };
+            return pythonPriceFlag;
         }
 
         /// <summary>
@@ -221,28 +263,6 @@ namespace FugleNET
         }
 
         /// <summary>
-        /// 修改委託價格。 <para/>
-        /// 市價不能改到其他價格旗標，其他價格旗標不能改成市價 <para/>
-        /// 除了限價，其他價格旗標不能改成原本的 ex: 漲停 -> 漲停, 跌停 -> 跌停 <para/>
-        /// price_flag 在非限價時，target_price 要放 None <para/>
-        /// 注意：只能修改 ROD 限價單的價格。
-        /// </summary>
-        /// <param name="orderResult">委託單資料</param>
-        /// <param name="targetPrice">目標價格</param>
-        /// <param name="priceFlag">價格旗標</param>
-        /// <returns></returns>
-        public ModifyPriceResult ModifyPrice(OrderResult orderResult, float? targetPrice=null,
-            PriceFlag? priceFlag=PriceFlag.Limit)
-        {
-            if (targetPrice is null && priceFlag is null)
-            {
-                throw new Exception("must provide valid arguments");
-            }
-
-            var pyOrderResult = 
-        }
-
-        /// <summary>
         /// 重設密碼
         /// </summary>
         public void ResetPassword()
@@ -250,13 +270,33 @@ namespace FugleNET
             FugleUtils.SetPassword(_aid);
         }
 
-        private PythonOrderResult RecoverOrderResult(OrderResult orderResult)
+        private Dictionary<string, dynamic> RecoverOrderResult(OrderResult orderResult)
         {
             var apCode = orderResult.ApCodeKind;
             var stockNo = orderResult.StockNo;
             var unit = _core.get_volume_per_unit(stockNo);
-            var dict = new Dictionary<string, int>();
 
+            var type = typeof(OrderResult);
+            var properties = type.GetProperties();
+
+            OrderResult copyOfResult = new OrderResult();
+            foreach (var propertyInfo in properties.Where(p => p.CanWrite))
+            {
+                if (propertyInfo.Name.EndsWith("Qty"))
+                {
+                    if (apCode is ApCode.IntradayOdd or ApCode.Emg or ApCode.Odd)
+                    {
+                        propertyInfo.SetValue(copyOfResult, propertyInfo.GetValue(orderResult) * unit);
+                    }
+                }
+                else
+                {
+                    propertyInfo.SetValue(copyOfResult, propertyInfo.GetValue(orderResult));
+                }
+            }
+
+            var pythonOrderResult = PythonOrderResult.CreateFrom(copyOfResult);
+            return pythonOrderResult.Items();
         } 
 
         private static void InitPython()

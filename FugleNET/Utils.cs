@@ -27,7 +27,7 @@ namespace FugleNET
         {
             return JsonConvert.DeserializeObject<T>(json);
         }
-        
+
 
         public static string Escape(string value)
         {
