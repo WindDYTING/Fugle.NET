@@ -2,7 +2,7 @@
 
 namespace FugleNET.Models
 {
-    public record ModifyPriceResult
+    public record ModifyOrderResult
     {
         /// <summary>
         /// 處理結果代碼

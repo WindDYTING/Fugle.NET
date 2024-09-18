@@ -61,6 +61,56 @@ namespace FugleNET
                 config["Api"]["Secret"]);
         }
 
+        public ModifyOrderResult CancelOrder(in OrderResult inOrderResult, int? celQty = null, int? celQtyShare = null)
+        {
+            var orderResult = RecoverOrderResult(inOrderResult);
+            var apCode = inOrderResult.ApCodeKind;
+            float unit = _core.get_volume_per_unit(inOrderResult.StockNo).As<float>();
+            int? executeCelQty = null;
+            string json, data;
+
+            if (celQtyShare is not null && celQty is not null)
+            {
+                throw new InvalidOperationException($"{nameof(celQty)} or {nameof(celQtyShare)}, not both");
+            }
+
+            if (celQtyShare is null && celQty is null)
+            {
+                json = _core.modify_volume(orderResult, 0).As<string>();
+                data = json.FromJson<Dictionary<string, object>>()["data"].ToString();
+                return data!.FromJson<ModifyOrderResult>();
+            }
+
+            if (celQty is not null)
+            {
+                executeCelQty = apCode is ApCode.Odd or ApCode.IntradayOdd or ApCode.Emg
+                    ? (int?)(celQty * unit)
+                    : celQty;
+            }
+
+            if (celQtyShare is not null)
+            {
+                if (apCode is ApCode.Odd or ApCode.IntradayOdd or ApCode.Emg)
+                {
+                    executeCelQty = celQtyShare;
+                }
+                else
+                {
+                    if (celQtyShare % unit != 0) throw new InvalidOperationException($"must be multiplys of {unit}");
+                    executeCelQty = (int)(celQtyShare / unit);
+                }
+            }
+
+            if (executeCelQty is null)
+            {
+                throw new ArgumentNullException($"must provide {nameof(celQty)} or {nameof(celQtyShare)}");
+            }
+
+            json = _core.modify_volume(orderResult, executeCelQty).As<string>();
+            data = json.FromJson<Dictionary<string, object>>()["data"].ToString();
+            return data!.FromJson<ModifyOrderResult>();
+        }
+
         /// <summary>
         /// 修改委託價格。 <para/>
         /// 市價不能改到其他價格旗標，其他價格旗標不能改成市價 <para/>
@@ -72,7 +122,7 @@ namespace FugleNET
         /// <param name="targetPrice">目標價格</param>
         /// <param name="priceFlag">價格旗標</param>
         /// <returns></returns>
-        public ModifyPriceResult ModifyPrice(in OrderResult inOrderResult, double? targetPrice=null,
+        public ModifyOrderResult ModifyPrice(in OrderResult inOrderResult, double? targetPrice=null,
             PriceFlag? priceFlag=PriceFlag.Limit)
         {
             if (targetPrice is null && priceFlag is null)
@@ -84,22 +134,7 @@ namespace FugleNET
             var pythonPriceFlag = ConvertPythonPriceFlag(priceFlag);
             string json = _core.modify_price(orderResult, targetPrice, pythonPriceFlag).As<string>();
             var data = json.FromJson<Dictionary<string, object>>()["data"].ToString();
-            return data!.FromJson<ModifyPriceResult>();
-        }
-
-        private static dynamic ConvertPythonPriceFlag(PriceFlag? priceFlag)
-        {
-            dynamic pythonPriceFlag = FuglePyCore.ConstantModule.PriceFlag;
-            pythonPriceFlag = priceFlag switch
-            {
-                PriceFlag.Limit => pythonPriceFlag.Limit,
-                PriceFlag.Flat => pythonPriceFlag.Flat,
-                PriceFlag.LimitDown => pythonPriceFlag.LimitDown,
-                PriceFlag.LimitUp => pythonPriceFlag.LimitUp,
-                PriceFlag.Market => pythonPriceFlag.Market,
-                _ => throw new ArgumentOutOfRangeException(nameof(priceFlag))
-            };
-            return pythonPriceFlag;
+            return data!.FromJson<ModifyOrderResult>();
         }
 
         /// <summary>
@@ -274,7 +309,7 @@ namespace FugleNET
         {
             var apCode = orderResult.ApCodeKind;
             var stockNo = orderResult.StockNo;
-            var unit = _core.get_volume_per_unit(stockNo);
+            float unit = _core.get_volume_per_unit(stockNo).As<float>();
 
             var type = typeof(OrderResult);
             var properties = type.GetProperties();
@@ -286,7 +321,11 @@ namespace FugleNET
                 {
                     if (apCode is ApCode.IntradayOdd or ApCode.Emg or ApCode.Odd)
                     {
-                        propertyInfo.SetValue(copyOfResult, propertyInfo.GetValue(orderResult) * unit);
+                        propertyInfo.SetValue(copyOfResult, (float)propertyInfo.GetValue(orderResult)! * unit);
+                    }
+                    else
+                    {
+                        propertyInfo.SetValue(copyOfResult, propertyInfo.GetValue(orderResult));
                     }
                 }
                 else
@@ -297,7 +336,7 @@ namespace FugleNET
 
             var pythonOrderResult = PythonOrderResult.CreateFrom(copyOfResult);
             return pythonOrderResult.Items();
-        } 
+        }
 
         private static void InitPython()
         {
@@ -361,5 +400,19 @@ namespace FugleNET
             }
         }
 
+        private static dynamic ConvertPythonPriceFlag(PriceFlag? priceFlag)
+        {
+            dynamic pythonPriceFlag = FuglePyCore.ConstantModule.PriceFlag;
+            pythonPriceFlag = priceFlag switch
+            {
+                PriceFlag.Limit => pythonPriceFlag.Limit,
+                PriceFlag.Flat => pythonPriceFlag.Flat,
+                PriceFlag.LimitDown => pythonPriceFlag.LimitDown,
+                PriceFlag.LimitUp => pythonPriceFlag.LimitUp,
+                PriceFlag.Market => pythonPriceFlag.Market,
+                _ => throw new ArgumentOutOfRangeException(nameof(priceFlag))
+            };
+            return pythonPriceFlag;
+        }
     }
 }

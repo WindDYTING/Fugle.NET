@@ -11,20 +11,20 @@ namespace FugleNET.PythonModels
         public dynamic price_flag;
         public dynamic bs_flag;
         public double avg_price;
-        public float cel_qty;
-        public float cel_qty_share;
+        public int cel_qty;
+        public int cel_qty_share;
         public string celable;
         public string err_code;
         public string err_msg;
-        public float mat_qty;
-        public float mat_qty_share;
+        public int mat_qty;
+        public int mat_qty_share;
         public double od_price;
         public string ord_date;
         public string ord_no;
         public string ord_status;
         public string ord_time;
-        public float org_qty;
-        public float org_qty_share;
+        public int org_qty;
+        public int org_qty_share;
         public string pre_ord_no;
         public string stock_no;
         public string work_date;
@@ -44,7 +44,7 @@ namespace FugleNET.PythonModels
 
         public PythonOrderResult ConvertFrom(OrderResult order)
         {
-            buy_sell = order.BuySellKind == ActionSide.Buy ? buy_sell.Buy : buy_sell.Sell;
+            buy_sell = order.BuySellKind == ActionSide.Buy ? buy_sell.Buy.value : buy_sell.Sell.value;
             ap_code = order.ApCodeKind switch
             {
                 ApCode.Common => ap_code.Common.value,
@@ -81,10 +81,10 @@ namespace FugleNET.PythonModels
             };
             stock_no = order.StockNo;
             avg_price = order.AvgPrice;
-            mat_qty = order.MatQty;
-            mat_qty_share = order.MatQtyShare;
-            cel_qty = order.CancelQty;
-            cel_qty_share = order.CancelQtyShare;
+            mat_qty = (int)order.MatQty;
+            mat_qty_share = (int)order.MatQtyShare;
+            cel_qty = (int)order.CancelQty;
+            cel_qty_share = (int)order.CancelQtyShare;
             celable = order.Cancelable;
             err_code = order.ErrorCode;
             err_msg = order.ErrorMsg;
@@ -93,8 +93,8 @@ namespace FugleNET.PythonModels
             ord_no = order.OrderNo;
             ord_time = order.OrderTime;
             ord_status = order.OrderStatus;
-            org_qty = order.OrgQty;
-            org_qty_share = order.OrgQtyShare;
+            org_qty = (int)order.OrgQty;
+            org_qty_share = (int)order.OrgQtyShare;
             pre_ord_no = order.PreOrderNo;
             work_date = order.WorkDate;
             user_def = order.UserDef;
