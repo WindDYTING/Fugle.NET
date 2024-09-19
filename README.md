@@ -1,6 +1,6 @@
 # Fugle.NET
 
-一個透過 Python.NET 串接 [Fugle Python API](https://github.com/fugle-dev/fugle-trade-python) 的 C# API。
+一個透過 Python.NET 串接 [Fugle Python API](https://github.com/fugle-dev/fugle-trade-python) 的 C# SDK。
 
 ## 環境
 * Python 3.7 ~ 3.9
