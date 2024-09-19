@@ -44,6 +44,6 @@ internal class Program
 > 注意：範例目錄底下也必須要有 config.simulation.ini 和 *.p12 的檔案
 
 ## Version Relationships
-| Fugle.NET version | python fugle trade core 2.1.0 |
+| Fugle.NET version | fugle_trade_core 2.1.0 |
 |-------------------|-------------------------------|
 |       1.0.0       |               v               |
