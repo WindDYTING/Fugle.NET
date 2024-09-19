@@ -7,7 +7,7 @@
 * DotNet 6.0
 * pip 安裝套件
 ```
-pip install fugle_trade
+pip install fugle_trade_core
 ```
 * 設置 PYTHON_HOME 環境變數
 ```
@@ -42,3 +42,8 @@ internal class Program
 }
 ```
 > 注意：範例目錄底下也必須要有 config.simulation.ini 和 *.p12 的檔案
+
+## Version Relationships
+| Fugle.NET version | python fugle trade core 2.1.0 |
+|-------------------|-------------------------------|
+|       1.0.0       |               v               |
