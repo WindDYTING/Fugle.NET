@@ -30,6 +30,20 @@ namespace FugleNET.Models
 
         /// <summary>
         /// API 金鑰權限
+        /// <list type="bullet">
+        ///  <item>
+        ///     <term>Trade "A"</term>
+        ///     <description>下單</description>
+        ///  </item>
+        ///  <item>
+        ///     <term>Query "B"</term>
+        ///     <description>查詢</description>
+        ///  </item>
+        ///  <item>
+        ///     <term>All "C"</term>
+        ///     <description>全部</description>
+        ///  </item>
+        /// </list>
         /// </summary>
         public string Scope { get; set; }
 
