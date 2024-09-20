@@ -61,6 +61,15 @@ namespace FugleNET
                 config["Api"]["Secret"]);
         }
 
+        /// <summary>
+        /// 減少委託單量, 或刪除單筆委託。
+        /// </summary>
+        /// <param name="inOrderResult">委託單資料</param>
+        /// <param name="celQty">取消張數 (optional)</param>
+        /// <param name="celQtyShare">取消股數 (optional)</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ArgumentNullException"></exception>
         public ModifyOrderResult CancelOrder(in OrderResult inOrderResult, int? celQty = null, int? celQtyShare = null)
         {
             var orderResult = RecoverOrderResult(inOrderResult);
