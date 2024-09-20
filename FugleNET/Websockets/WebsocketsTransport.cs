@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Buffers;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
@@ -8,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace FugleNET.Websockets
 {
-    internal class WebsocketsTransport : IAsyncDisposable
+    internal class WebsocketsTransport : IAsyncDisposable, IWebsocketsTransport
     {
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
         private const int DefaultBufferSize = 1 << 20;
         private const int DefaultCloseTimeout = 5000;
         private readonly CancellationTokenSource _cts;
@@ -32,7 +33,7 @@ namespace FugleNET.Websockets
 
         public PipeWriter Output => _transport.Output;
 
-        public WebsocketsTransport(ILogger logger)
+        public WebsocketsTransport(ILogger? logger)
         {
             _logger = logger;
             _cts = new CancellationTokenSource();
@@ -42,7 +43,7 @@ namespace FugleNET.Websockets
         {
             if (!WebsocketCanBeSend(_socket))
             {
-                _logger.WebsocketCannotSent();
+                _logger?.WebsocketCannotSent();
                 return;
             }
 
@@ -55,7 +56,7 @@ namespace FugleNET.Websockets
         {
             if (!WebsocketCanBeSend(_socket))
             {
-                _logger.WebsocketCannotSent();
+                _logger?.WebsocketCannotSent();
                 return;
             }
             SendAsync(msg).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -63,6 +64,8 @@ namespace FugleNET.Websockets
 
         public async Task StartAsync(Uri serverUri)
         {
+            Checks.EnsureNotNull(_cts);
+
             _socket = new ClientWebSocket();
             await _socket.ConnectAsync(serverUri, CancellationToken.None).ConfigureAwait(false);
 
@@ -99,7 +102,7 @@ namespace FugleNET.Websockets
                         }
                         catch (Exception e)
                         {
-                            _logger.Error(e.ToString());
+                            _logger?.Error(e.ToString());
                         }
                     }
 
@@ -110,7 +113,7 @@ namespace FugleNET.Websockets
             }
             catch (Exception e)
             {
-                _logger.Error(e.ToString());
+                _logger?.Error(e.ToString());
                 throw;
             }
         }
@@ -290,14 +293,14 @@ namespace FugleNET.Websockets
                     }
                     catch (Exception e)
                     {
-                        _logger.Error(e.ToString());
+                        _logger?.Error(e.ToString());
                     }
                 }
                 reader.Complete();
 
                 if (error is not null)
                 {
-                    _logger.Error(error.ToString());
+                    _logger?.Error(error.ToString());
                 }
             }
         }
@@ -333,7 +336,7 @@ namespace FugleNET.Websockets
             }
             catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
             {
-                _logger.Error(ex.ToString());
+                _logger?.Error(ex.ToString());
             }
             catch (OperationCanceledException)
             {

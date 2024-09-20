@@ -8,18 +8,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace FugleNET
 {
-    public class FugleSDK
+    public class FugleSDK : IDisposable, IAsyncDisposable
     {
         private const string DefaultPythonDll = "python39.dll";
         private readonly string _aid;
 
         private static dynamic _core;
 
+        public bool IsDisposed { get; private set; }
+
         public ILogger Logger { get; set; } = new DefaultConsoleLogger();
+
+        public WebsocketHandler WsHandler { get; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static FugleSDK()
@@ -48,11 +53,13 @@ namespace FugleNET
             {
                 throw new Exception("please setup your config before using this SDK");
             }
-            
+
             FugleUtils.SetupKeyring(_aid);
             FugleUtils.CheckPassword(_aid);
-           
-            _core = FuglePyCore.CoreModule.CoreSDK(
+
+            WsHandler = new WebsocketHandler(Logger);
+
+            FuglePyCore.CoreSDK = _core = FuglePyCore.CoreModule.CoreSDK(
                 config["Core"]["Entry"],
                 config["User"]["Account"],
                 config["Cert"]["Path"],
@@ -314,6 +321,8 @@ namespace FugleNET
             FugleUtils.SetPassword(_aid);
         }
 
+        public Task ConnectWebsocketAsync() => WsHandler.ConnectAsync(_core.get_ws_url().As<string>());
+
         private Dictionary<string, dynamic> RecoverOrderResult(OrderResult orderResult)
         {
             var apCode = orderResult.ApCodeKind;
@@ -349,23 +358,13 @@ namespace FugleNET
 
         private static void InitPython()
         {
-            var home = Environment.GetEnvironmentVariable("PYTHON_HOME", EnvironmentVariableTarget.Machine);
-            if (string.IsNullOrEmpty(home))
+            var pydll = Environment.GetEnvironmentVariable("PYTHONNET_PYDLL", EnvironmentVariableTarget.Machine);
+            if (string.IsNullOrEmpty(pydll))
             {
-                throw new Exception("'PYTHON_HOME' environment variable does not exist");
+                throw new Exception("'PYTHONNET_PYDLL' environment variable does not exist");
             }
 
-            var pythonDll = DefaultPythonDll;
-            var pythonDlls = Directory.GetFiles(home, "python3?.dll", SearchOption.TopDirectoryOnly)
-                .Where(x => !x.EndsWith("python3.dll"))
-                .ToArray();
-            if (pythonDlls.Any())
-            {
-                pythonDll = Path.GetFileName(pythonDlls[0]);
-            }
-
-            Runtime.PythonDLL = Path.Join(home, pythonDll);
-            PythonEngine.PythonHome = home;
+            Runtime.PythonDLL = pydll;
             PythonEngine.Initialize();
         }
 
@@ -422,6 +421,36 @@ namespace FugleNET
                 _ => throw new ArgumentOutOfRangeException(nameof(priceFlag))
             };
             return pythonPriceFlag;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                WsHandler?.Dispose();
+            }
+        }
+
+        protected virtual async ValueTask DisposeAsync(bool disposing)
+        {
+            if (disposing)
+            {
+                if (WsHandler != null) await WsHandler.DisposeAsync();
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+            IsDisposed = true;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsync(true);
+            GC.SuppressFinalize(this);
+            IsDisposed = true;
         }
     }
 }
