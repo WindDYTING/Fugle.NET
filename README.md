@@ -9,9 +9,9 @@
 ```
 pip install fugle_trade_core
 ```
-* 設置 PYTHON_HOME 環境變數
+* 設置 PYTHONNET_PYDLL 環境變數
 ```
-set PYTHON_HOME = "安裝 python 的目錄 <ex>: C:\Users\user1\AppData\Local\Programs\Python\Python39"
+set PYTHONNET_PYDLL = "安裝 python 的目錄 <ex>: C:\Users\user1\AppData\Local\Programs\Python\Python39"
 ```
 * 完成申請金鑰相關步驟，可以參考 https://developer.fugle.tw/docs/trading/prerequisites 
 
